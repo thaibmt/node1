@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Required Meta Tags -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <title>Dashboard</title>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-12">
+
+        <div class="d-flex justify-content-between">
+          <div>Xin chào: <strong>
+              <%= username %>
+            </strong>
+          </div>
+          <a href="logout" class="btn btn-warning">Đăng xuất</a>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <h2 class="my-4">Quản lý sách</h2>
+          <button class="btn btn-primary" onclick="addBook()">Thêm sách</button>
+        </div>
+        <div class="text-center">
+          <strong class="text-danger">
+            <%= error ? (typeof error=='boolean' ? 'Có lỗi xảy ra' : error) :'' %>
+          </strong>
+          <strong class="text-success">
+            <%= success ? 'Thành công' :'' %>
+          </strong>
+        </div>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Tên sách</th>
+              <th scope="col">Giá</th>
+              <th scope="col">Mô tả</th>
+              <th scope="col" class="text-center">Chức năng</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% books.forEach((book,index)=>{ %>
+              <tr>
+                <th scope="row">
+                  <%= index+1 %>
+                </th>
+                <td>
+                  <a href="books/<%= book._id %>">
+                    <%=book.title %>
+                  </a>
+                </td>
+                <td>
+                  <%= book.price %>đ
+                </td>
+                <td>
+                  <%= book.description %>
+                </td>
+
+                <td class="d-flex text-center justify-content-center">
+                  <a class="btn btn-primary mx-2" href="books/<%= book._id %>">
+                    Chi tiết</a>
+                  <% if(role=='admin' ){ %>
+                    <button class=" btn btn-warning mx-2" onclick="editBook('<%= book._id %>')">Chỉnh
+                      Sửa</button>
+                    <form method="post" action="/books/delete/<%= book._id %>">
+                      <button class="btn btn-danger" onclick="confirmDelete('<%= book._id %>')">
+                        Xóa
+                      </button>
+                    </form>
+                    <% } %>
+                </td>
+              </tr>
+              <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Thêm và Chỉnh Sửa -->
+  <div class="modal" id="bookModal" tabindex="-1" role="dialog" aria-labelledby="bookModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="bookModalLabel">
+            Thêm
+          </h5>
+          <button type="button" class="close btn btn-danger" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Nội dung form thêm và chỉnh sửa sách -->
+          <form id="bookForm" method="post" action="/books">
+            <div class="form-group mb-2">
+              <label for="bookTitle">Tiêu đề</label>
+              <input type="text" class="form-control" id="bookTitle" name="title" required />
+            </div>
+            <div class="form-group mb-2">
+              <label for="bookPrice">Giá</label>
+              <input type="number" min="0" class="form-control" id="bookPrice" name="price" required />
+            </div>
+            <div class="form-group mb-2">
+              <label for="bookDescription">Mô tả ngắn</label>
+              <textarea class="form-control" id="bookDescription" name="description"></textarea>
+            </div>
+            <div class="text-center w-100">
+              <button type="submit" class="btn btn-primary">Thêm</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
+    integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js"
+    integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V"
+    crossorigin="anonymous"></script>
+  <script>
+    const books = JSON.parse('<%- JSON.stringify(books) %>');
+    const bookForm = document.getElementById("bookForm");
+    function confirmDelete(bookId) {
+      var result = confirm("Bạn có chắc muốn xóa sách này?");
+      if (result) {
+        // Nếu người dùng đồng ý xóa, chuyển hướng đến route xóa sách
+        window.location.href = "/books/delete/" + bookId;
+      }
+    }
+    function addBook() {
+      document.getElementById("bookModalLabel").textContent = "Thêm";
+      // reset dữ liệu input
+      document.getElementById("bookTitle").value = "";
+      document.getElementById("bookPrice").value = "";
+      document.getElementById("bookDescription").value = "";
+      // Thay đổi action của form để gửi yêu cầu thêm mới
+      bookForm.action = "/books";
+
+      // Mở modal
+      $("#bookModal").modal("show");
+    }
+    function editBook(bookId) {
+      const book = books.filter(book => book._id == bookId)[0];
+      if (!book) {
+        return;
+      }
+      // Cập nhật nội dung modal với thông tin sách
+      document.getElementById("bookModalLabel").textContent = "Sửa";
+      document.getElementById("bookTitle").value = book.title;
+      document.getElementById("bookPrice").value = book.price;
+      document.getElementById("bookDescription").value = book.description;
+      // Thay đổi action của form để gửi yêu cầu chỉnh sửa thay vì thêm mới
+      document.getElementById("bookForm").action =
+        "/books/update/" + bookId;
+
+      // Mở modal
+      $("#bookModal").modal("show");
+
+    }
+  </script>
+</body>
+
+</html>
